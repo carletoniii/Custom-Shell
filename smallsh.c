@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <err.h>
 #include <errno.h>
+#include <string.h>
 
 
 int main(){
@@ -13,6 +14,8 @@ int main(){
   // Line pointer declaration
   char *line = NULL;
   size_t n = 0;
+
+  char *words[512];
 
   // Infinite loop
   start: for (;;) {
@@ -33,7 +36,18 @@ int main(){
     // Word splitting
     if (getenv("IFS") == NULL) {
       setenv("IFS", " \t\n", 1);
+    }    
+    char *IFS = getenv("IFS");
+
+    words[0] = strtok(line, IFS);
+
+    int i = 0;
+    while (words[i] != NULL) {
+      i++;
+      words[i] = strtok(NULL, IFS);
     }
+    
+    printf("%d", i);
 
   }
 }
