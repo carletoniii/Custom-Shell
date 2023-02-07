@@ -18,14 +18,22 @@ int main(){
   start: for (;;) {
    
     // The prompt
-    printf("%s", getenv("PS1"));
+    fprintf(stderr, "%s", getenv("PS1"));
 
     // Reading a line of input
     errno = 0;
-    ssize_t line_length = getline(&line, &n, stdin); 
+    ssize_t line_length = getline(&line, &n, stdin);
+
+    // Error handling for getline
     if (line_length == -1 || errno != 0) {
       fprintf(stderr, "Error reading input.");
       goto start;
     }
+  
+    // Word splitting
+    if (getenv("IFS") == NULL) {
+      setenv("IFS", " \t\n", 1);
+    }
+
   }
 }
