@@ -14,7 +14,8 @@ int main(){
   // Line pointer declaration
   char *line = NULL;
   size_t n = 0;
-
+  
+  // Word pointer declarations
   char *words[512];
 
   // Infinite loop
@@ -34,20 +35,14 @@ int main(){
     }
   
     // Word splitting
-    if (getenv("IFS") == NULL) {
-      setenv("IFS", " \t\n", 1);
-    }    
-    char *IFS = getenv("IFS");
-
-    words[0] = strtok(line, IFS);
-
+    char *IFS = " \t\n";
+    
     int i = 0;
+    words[i] = strdup(strtok(line,IFS));
     while (words[i] != NULL) {
       i++;
       words[i] = strtok(NULL, IFS);
     }
     
-    printf("%d", i);
-
   }
 }
