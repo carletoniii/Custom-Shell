@@ -7,9 +7,10 @@
 #include <err.h>
 #include <errno.h>
 #include <string.h>
+#include <stddef.h>
 
 
-int main(){
+int main(void){
 
   // Line pointer declaration
   char *line = NULL;
@@ -17,10 +18,13 @@ int main(){
   
   // Word pointer declarations
   char *words[512];
+  char *temp = NULL;
 
   // Infinite loop
-  start: for (;;) {
-   
+  for (;;) {
+    
+    start: 
+
     // The prompt
     fprintf(stderr, "%s", getenv("PS1"));
 
@@ -33,16 +37,59 @@ int main(){
       fprintf(stderr, "Error reading input.");
       goto start;
     }
-  
+
     // Word splitting
-    char *IFS = " \t\n";
+    if (getenv("IFS") == NULL) {
+      setenv("IFS", " \t\n", 1);
+    }
+    char *IFS = getenv("IFS");
     
     int i = 0;
-    words[i] = strdup(strtok(line,IFS));
-    while (words[i] != NULL) {
+    temp = strtok(line, IFS);
+    while (temp != NULL) {
+      words[i] = strdup(temp);
+      printf("%s", words[i]);
       i++;
-      words[i] = strtok(NULL, IFS);
+      temp = strtok(NULL, IFS);
     }
     
+    // Expansion
+    
+
   }
+  return 0;
+}
+
+
+// String search and replace function
+// Provided by Ryan Gambord in "Re: String search and replace tutorial"
+char *str_gsub(char *restrict *restrict haystack, char const *restrict needle, char const *restrict sub)
+{
+  char *str = *haystack;
+  size_t haystack_len = strlen(str);
+  size_t const needle_len = strlen(needle),
+               sub_len = strlen(sub);
+
+  for (; (str = strstr(str, needle));) {
+    ptrdiff_t off = str - *haystack;
+    if (sub_len > needle_len) {
+      str = realloc(*haystack, sizeof **haystack * (haystack_len + sub_len - needle_len + 1));
+      if (!str) goto exit;
+      *haystack = str;
+      str = *haystack + off;
+    }
+    memmove(str + sub_len, str + needle_len, haystack_len + 1 - off - needle_len);
+    memcpy(str, sub, sub_len);
+    haystack_len = haystack_len + sub_len - needle_len;
+    str += sub_len;
+  }
+  str = *haystack;
+  if (sub_len < needle_len) {
+    str = realloc(*haystack, sizeof **haystack * (haystack_len + 1));
+    if (!str) goto exit;
+    *haystack = str;
+  }
+
+exit:
+  return str;
 }
