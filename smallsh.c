@@ -97,7 +97,32 @@ int main(void){
       i--;
       j++;
     } 
+    
+    // Parsing
+    
+    // Execution
+    char *newargv[] = { "/bin/ls", "-al", NULL };
+    int childStatus;
 
+    pid_t spawnPid = fork();
+
+    switch(spawnPid) {
+    case -1:
+      perror("fork()\n");
+      exit(1);
+      break;
+    case 0:
+      printf("CHILD(%d) running in command\n", getpid());
+      execv(newargv[0], newargv);
+      perror("execve");
+      exit(2);
+      break;
+    default:
+      spawnPid = waitpid(spawnPid, &childStatus, 0);
+      printf("PARENT(%d): child(%d) terminated. Exiting\n", getpid(), spawnPid);
+      exit(0);
+      break;
+    }
   }
   return 0;
 }
