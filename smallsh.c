@@ -10,6 +10,38 @@
 #include <stddef.h>
 
 
+// String search and replace function
+char *str_gsub(char *restrict *restrict haystack, char const *restrict needle, char const *restrict sub)
+{
+  char *str = *haystack;
+  size_t haystack_len = strlen(str);
+  size_t const needle_len = strlen(needle),
+               sub_len = strlen(sub);
+
+  for (; (str = strstr(str, needle));) {
+    ptrdiff_t off = str - *haystack;
+    if (sub_len > needle_len) {
+      str = realloc(*haystack, sizeof **haystack * (haystack_len + sub_len - needle_len + 1));
+      if (!str) goto exit;
+      *haystack = str;
+      str = *haystack + off;
+    }
+    memmove(str + sub_len, str + needle_len, haystack_len + 1 - off - needle_len);
+    memcpy(str, sub, sub_len);
+    haystack_len = haystack_len + sub_len - needle_len;
+    str += sub_len;
+  }
+  str = *haystack;
+  if (sub_len < needle_len) {
+    str = realloc(*haystack, sizeof **haystack * (haystack_len + 1));
+    if (!str) goto exit;
+    *haystack = str;
+  }
+
+exit:
+  return str;
+}
+
 int main(void){
 
   // Line pointer declaration
@@ -48,48 +80,27 @@ int main(void){
     temp = strtok(line, IFS);
     while (temp != NULL) {
       words[i] = strdup(temp);
-      printf("%s", words[i]);
       i++;
       temp = strtok(NULL, IFS);
     }
     
     // Expansion
-    
+    int j = 0;
+    char *PID = malloc(sizeof(int) * 8);
+    sprintf(PID, "%d", getpid());
+    while (i > 0) {
+      if (strncmp(words[j], "~/", 2) == 0) {
+        str_gsub(&words[j], "~", getenv("HOME"));
+      }
+      str_gsub(&words[j], "$$", PID); 
+      printf("%s\n", words[j]);
+      i--;
+      j++;
+    } 
 
   }
   return 0;
 }
 
 
-// String search and replace function
-// Provided by Ryan Gambord in "Re: String search and replace tutorial"
-char *str_gsub(char *restrict *restrict haystack, char const *restrict needle, char const *restrict sub)
-{
-  char *str = *haystack;
-  size_t haystack_len = strlen(str);
-  size_t const needle_len = strlen(needle),
-               sub_len = strlen(sub);
 
-  for (; (str = strstr(str, needle));) {
-    ptrdiff_t off = str - *haystack;
-    if (sub_len > needle_len) {
-      str = realloc(*haystack, sizeof **haystack * (haystack_len + sub_len - needle_len + 1));
-      if (!str) goto exit;
-      *haystack = str;
-      str = *haystack + off;
-    }
-    memmove(str + sub_len, str + needle_len, haystack_len + 1 - off - needle_len);
-    memcpy(str, sub, sub_len);
-    haystack_len = haystack_len + sub_len - needle_len;
-    str += sub_len;
-  }
-  str = *haystack;
-  if (sub_len < needle_len) {
-    str = realloc(*haystack, sizeof **haystack * (haystack_len + 1));
-    if (!str) goto exit;
-    *haystack = str;
-  }
-
-exit:
-  return str;
-}
