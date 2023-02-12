@@ -113,8 +113,8 @@ int main(void){
       break;
     case 0:
       printf("CHILD(%d) running in command\n", getpid());
-      execv(newargv[0], newargv);
-      perror("execve");
+      execvp(newargv[0], newargv);
+      perror("execvp");
       exit(2);
       break;
     default:
