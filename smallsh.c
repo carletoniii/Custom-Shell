@@ -74,7 +74,7 @@ int main(void){
     if (getenv("IFS") == NULL) {
       setenv("IFS", " \t\n", 1);
     }
-    char *IFS = getenv("IFS");
+    char *IFS = " \t\n";
     
     int i = 0;
     temp = strtok(line, IFS);
@@ -93,7 +93,6 @@ int main(void){
         str_gsub(&words[j], "~", getenv("HOME"));
       }
       str_gsub(&words[j], "$$", PID); 
-      printf("%s\n", words[j]);
       i--;
       j++;
     } 
@@ -101,7 +100,6 @@ int main(void){
     // Parsing
     
     // Execution
-    char *newargv[] = { "/bin/ls", "-al", NULL };
     int childStatus;
 
     pid_t spawnPid = fork();
@@ -113,15 +111,14 @@ int main(void){
       break;
     case 0:
       printf("CHILD(%d) running in command\n", getpid());
-      execvp(newargv[0], newargv);
+      execvp(words[0], words);
       perror("execvp");
       exit(2);
       break;
     default:
       spawnPid = waitpid(spawnPid, &childStatus, 0);
       printf("PARENT(%d): child(%d) terminated. Exiting\n", getpid(), spawnPid);
-      exit(0);
-      break;
+      goto start;
     }
   }
   return 0;
