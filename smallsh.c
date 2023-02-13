@@ -8,6 +8,7 @@
 #include <errno.h>
 #include <string.h>
 #include <stddef.h>
+#include <ctype.h>
 
 
 // String search and replace function
@@ -49,7 +50,7 @@ int main(void){
   size_t n = 0;
   
   // Word pointer declarations
-  char *words[512];
+  char *words[512] = { NULL };
   char *temp = NULL;
 
   // Infinite loop
@@ -66,7 +67,7 @@ int main(void){
 
     // Error handling for getline
     if (line_length == -1 || errno != 0) {
-      fprintf(stderr, "Error reading input.");
+      fprintf(stderr, "Error reading input.\n");
       goto start;
     }
 
@@ -75,7 +76,7 @@ int main(void){
       setenv("IFS", " \t\n", 1);
     }
     char *IFS = " \t\n";
-    
+
     int i = 0;
     temp = strtok(line, IFS);
     while (temp != NULL) {
@@ -96,10 +97,43 @@ int main(void){
       i--;
       j++;
     } 
-    
+
     // Parsing
-    
     // Execution
+    // Built-in commands
+    if (words[0] != NULL) {
+      // exit
+      if (strcmp(words[0], "exit") == 0) {
+        if (words[2] != NULL) {
+          fprintf(stderr, "Too many arguments.\n");
+          goto start;
+        }
+        if (words[1] != NULL) {
+          if (!isdigit(*words[1])) {
+            fprintf(stderr, "Argument is not an integer.\n");
+            goto start;
+          }
+        }
+        fprintf(stderr, "\nexit\n");
+        exit(*words[1]);
+      }
+
+      // cd
+      if (strncmp(words[0], "cd", 2) == 0) {
+        if (words[2] != NULL) {
+          fprintf(stderr, "Too many arguments.\n");
+          goto start;
+        }
+        if (words[1] == NULL) {
+          words[1] = getenv("HOME");
+          strcat(words[1], "/");
+        }
+        chdir(words[1]);
+        goto start;
+      }
+    }
+
+    // Non-built-in commands
     int childStatus;
 
     pid_t spawnPid = fork();
