@@ -58,6 +58,10 @@ int main(void){
     
     start: 
 
+    for (int i = 0; i < 512; i++) {
+      words[i] = NULL;
+    }
+
     // The prompt
     fprintf(stderr, "%s", getenv("PS1"));
 
