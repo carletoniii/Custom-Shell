@@ -11,7 +11,6 @@
 #include <ctype.h>
 
 
-//hi
 // String search and replace function
 char *str_gsub(char *restrict *restrict haystack, char const *restrict needle, char const *restrict sub)
 {
