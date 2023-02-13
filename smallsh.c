@@ -9,9 +9,11 @@
 #include <string.h>
 #include <stddef.h>
 #include <ctype.h>
+#include <stdint.h>
 
 
 // String search and replace function
+// Function provided by Ryan Gamford in string search and replace tutorial
 char *str_gsub(char *restrict *restrict haystack, char const *restrict needle, char const *restrict sub)
 {
   char *str = *haystack;
@@ -48,6 +50,9 @@ int main(void){
   // Line pointer declaration
   char *line = NULL;
   size_t n = 0;
+  int childStatus;
+  int bgChild;
+  char *bgPID = "";
   
   // Word pointer declarations
   char *words[512] = { NULL };
@@ -60,6 +65,12 @@ int main(void){
 
     for (int i = 0; i < 512; i++) {
       words[i] = NULL;
+    }
+
+    // Input
+    // Managing background processes
+    while ((bgChild = waitpid(0, &childStatus, WUNTRACED | WNOHANG)) > 0) {
+      printf("Child pid = %jd", (intmax_t)bgChild);
     }
 
     // The prompt
@@ -97,7 +108,8 @@ int main(void){
       if (strncmp(words[j], "~/", 2) == 0) {
         str_gsub(&words[j], "~", getenv("HOME"));
       }
-      str_gsub(&words[j], "$$", PID); 
+      str_gsub(&words[j], "$$", PID);
+      str_gsub(&words[j], "$!", bgPID);
       i--;
       j++;
     } 
@@ -138,7 +150,6 @@ int main(void){
     }
 
     // Non-built-in commands
-    int childStatus;
 
     pid_t spawnPid = fork();
 
@@ -148,14 +159,16 @@ int main(void){
       exit(1);
       break;
     case 0:
-      printf("CHILD(%d) running in command\n", getpid());
+      // printf("CHILD(%d) running in command\n", getpid());
       execvp(words[0], words);
-      perror("execvp");
+      // perror("execvp");
       exit(2);
       break;
     default:
       spawnPid = waitpid(spawnPid, &childStatus, 0);
-      printf("PARENT(%d): child(%d) terminated. Exiting\n", getpid(), spawnPid);
+      bgPID = malloc(10 * sizeof(int));
+      sprintf(bgPID, "%d", spawnPid);
+      // printf("PARENT(%d): child(%d) terminated. Exiting\n", getpid(), spawnPid);
       goto start;
     }
   }
