@@ -53,6 +53,9 @@ int main(void){
   int childStatus;
   int bgChild;
   char *bgPID = "";
+  int bgFlag = 0;
+  char *infile;
+  char *outfile;
   
   // Word pointer declarations
   char *words[512] = { NULL };
@@ -62,6 +65,10 @@ int main(void){
   for (;;) {
     
     start: 
+    
+    bgFlag = 0;
+    infile = NULL;
+    outfile = NULL;
 
     for (int i = 0; i < 512; i++) {
       words[i] = NULL;
@@ -115,10 +122,76 @@ int main(void){
     } 
 
     // Parsing
+    int y = 0;
+    j--;
+    i++;
+    while (j >= 0) {
+      if (strcmp(words[j], "#") == 0) {
+        words[j] = NULL;
+        y = j;
+      }
+      if (strcmp(words[j], "&") == 0) {
+        words[j] = NULL;
+        bgFlag = 1;
+        y = j;
+      }
+      j--;
+      i++;
+    }
+    if (y > 0) {
+      if (y > 2) {
+        if (strcmp(words[y - 2], "<") == 0) {
+          infile = malloc(100 * sizeof(char));
+          infile = words[y - 1];
+          if (y > 4) {
+            if (strcmp(words[y - 4], ">") == 0) {
+              outfile = malloc(100 * sizeof(char));
+              outfile = words[y - 3];
+            }
+          }
+        }
+        if (strcmp(words[y - 2], ">") == 0) {
+          outfile = malloc(100 * sizeof(char));
+          outfile = words[y - 1];
+          if (y > 4) {
+            if (strcmp(words[y - 4], "<") == 0) {
+              infile = malloc(100 * sizeof(char));
+              infile = words[y - 3];
+            }
+          }
+        }
+      }
+    } else {
+      if (i > 0) {
+        if (i > 2) {
+          if (strcmp(words[i - 2], "<") == 0) {
+            infile = malloc(100 * sizeof(char));
+            infile = words[i - 1];
+            if (i > 4) {
+              if (strcmp(words[i - 4], ">") == 0) {
+                outfile = malloc(100 * sizeof(char));
+                outfile = words[i - 3];
+              }
+            }
+          }
+          if (strcmp(words[i - 2], ">") == 0) {
+            outfile = malloc(100 * sizeof(char));
+            outfile = words[i - 1];
+            if (y > 4) {
+              if (strcmp(words[i - 4], "<") == 0) {
+                infile = malloc(100 * sizeof(char));
+                infile = words[i - 3];
+              }
+            }
+          }
+        }
+      }
+    }
+
     // Execution
     // Built-in commands
     if (words[0] != NULL) {
-      // exit
+      // exit command
       if (strcmp(words[0], "exit") == 0) {
         if (words[2] != NULL) {
           fprintf(stderr, "Too many arguments.\n");
@@ -130,12 +203,14 @@ int main(void){
             goto start;
           }
         }
+        if (words[1] == NULL) {
+        }
         fprintf(stderr, "\nexit\n");
         exit(*words[1]);
       }
 
-      // cd
-      if (strncmp(words[0], "cd", 2) == 0) {
+      // cd command
+      if (strcmp(words[0], "cd") == 0) {
         if (words[2] != NULL) {
           fprintf(stderr, "Too many arguments.\n");
           goto start;
