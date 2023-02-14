@@ -119,72 +119,82 @@ int main(void){
       str_gsub(&words[j], "$!", bgPID);
       i--;
       j++;
-    } 
+    }
 
     // Parsing
     int y = 0;
-    j--;
-    i++;
-    while (j >= 0) {
-      if (strcmp(words[j], "#") == 0) {
-        words[j] = NULL;
-        y = j;
-      }
-      if (strcmp(words[j], "&") == 0) {
-        words[j] = NULL;
-        bgFlag = 1;
-        y = j;
+    while (j > 0) {
+      if (strcmp(words[j - 1], "#") == 0) {
+        y = j - 2;
+        words[j - 1] = NULL;
+        i--;
       }
       j--;
       i++;
     }
     if (y > 0) {
+      if (strcmp(words[y], "&") == 0) {
+        words[y] = NULL;
+        bgFlag = 1;
+        y--;
+      }
       if (y > 2) {
-        if (strcmp(words[y - 2], "<") == 0) {
-          infile = malloc(100 * sizeof(char));
-          infile = words[y - 1];
+        if (strcmp(words[y - 1], "<") == 0) {
+          infile = words[y];
+          words[y] = NULL;
+          words[y - 1] = NULL;
           if (y > 4) {
-            if (strcmp(words[y - 4], ">") == 0) {
-              outfile = malloc(100 * sizeof(char));
-              outfile = words[y - 3];
+            if (strcmp(words[y - 3], ">") == 0) {
+              outfile = words[y - 2];
+              words[y - 2] = NULL;
+              words[y - 3] = NULL;
             }
           }
-        }
-        if (strcmp(words[y - 2], ">") == 0) {
-          outfile = malloc(100 * sizeof(char));
-          outfile = words[y - 1];
+        } else if (strcmp(words[y - 1], ">") == 0) {
+          outfile = words[y];
+          words[y] = NULL;
+          words[y - 1] = NULL;
           if (y > 4) {
-            if (strcmp(words[y - 4], "<") == 0) {
-              infile = malloc(100 * sizeof(char));
-              infile = words[y - 3];
+            if (strcmp(words[y - 3], "<") == 0) {
+              infile = words[y - 2];
+              words[y - 2] = NULL;
+              words[y - 3] = NULL;
             }
           }
         }
       }
     } else {
       if (i > 0) {
-        if (i > 2) {
-          if (strcmp(words[i - 2], "<") == 0) {
-            infile = malloc(100 * sizeof(char));
-            infile = words[i - 1];
-            if (i > 4) {
-              if (strcmp(words[i - 4], ">") == 0) {
-                outfile = malloc(100 * sizeof(char));
-                outfile = words[i - 3];
-              }
-            }
-          }
-          if (strcmp(words[i - 2], ">") == 0) {
-            outfile = malloc(100 * sizeof(char));
-            outfile = words[i - 1];
-            if (y > 4) {
-              if (strcmp(words[i - 4], "<") == 0) {
-                infile = malloc(100 * sizeof(char));
-                infile = words[i - 3];
-              }
-            }
-          }
+        if (strcmp(words[i - 1], "&") == 0) {
+          words[i - 1] = NULL;
+          bgFlag = 1;
+          i--;
         }
+        if (i > 3) {
+          if (strcmp(words[i - 2], "<") == 0) {
+            infile = words[i - 1];
+            words[i - 1] = NULL;
+            words[i - 2] = NULL;
+            if (i > 5) {
+              if (strcmp(words[i - 4], ">") == 0) {
+                outfile = words[i - 3];
+                words[i - 3] = NULL;
+                words[i - 4] = NULL;
+              }
+            }
+          } else if (strcmp(words[i - 2], ">") == 0) {
+            outfile = words[i - 1];
+            words[i - 1] = NULL;
+            words[i - 2] = NULL;
+            if (i > 5) {
+              if (strcmp(words[i - 4], "<") == 0) {
+                infile = words[i - 3];
+                words[i - 3] = NULL;
+                words[i - 4] = NULL;
+              }
+            }
+          }
+        } 
       }
     }
 
