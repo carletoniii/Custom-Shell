@@ -53,6 +53,7 @@ int main(void){
   int childStatus;
   int bgChild;
   char *bgPID = "";
+  char *fgPID = "0";
   int bgFlag = 0;
   char *infile;
   char *outfile;
@@ -70,8 +71,8 @@ int main(void){
     infile = NULL;
     outfile = NULL;
 
-    for (int i = 0; i < 512; i++) {
-      words[i] = NULL;
+    for (int n = 0; n < 512; n++) {
+      words[n] = NULL;
     }
 
     // Input
@@ -81,7 +82,11 @@ int main(void){
     }
 
     // The prompt
-    fprintf(stderr, "%s", getenv("PS1"));
+    char *PS1;
+    if ((PS1 = getenv("PS1")) == NULL) {
+      PS1 = "";
+    }
+    fprintf(stderr, "%s", PS1);
 
     // Reading a line of input
     errno = 0;
@@ -97,7 +102,7 @@ int main(void){
     if (getenv("IFS") == NULL) {
       setenv("IFS", " \t\n", 1);
     }
-    char *IFS = " \t\n";
+    char *IFS = (getenv("IFS"));
 
     int i = 0;
     temp = strtok(line, IFS);
@@ -112,11 +117,14 @@ int main(void){
     char *PID = malloc(sizeof(int) * 8);
     sprintf(PID, "%d", getpid());
     while (i > 0) {
-      if (strncmp(words[j], "~/", 2) == 0) {
-        str_gsub(&words[j], "~", getenv("HOME"));
+      if (words[j] != NULL) {
+        if (strncmp(words[j], "~/", 2) == 0) {
+          str_gsub(&words[j], "~", getenv("HOME"));
+        }
+        str_gsub(&words[j], "$$", PID);
+        str_gsub(&words[j], "$?", fgPID);
+        str_gsub(&words[j], "$!", bgPID);
       }
-      str_gsub(&words[j], "$$", PID);
-      str_gsub(&words[j], "$!", bgPID);
       i--;
       j++;
     }
@@ -250,10 +258,15 @@ int main(void){
       exit(2);
       break;
     default:
-      spawnPid = waitpid(spawnPid, &childStatus, 0);
-      bgPID = malloc(10 * sizeof(int));
-      sprintf(bgPID, "%d", spawnPid);
-      // printf("PARENT(%d): child(%d) terminated. Exiting\n", getpid(), spawnPid);
+      if (bgFlag == 0) {
+        spawnPid = waitpid(spawnPid, &childStatus, 0);
+        fgPID = malloc(10 * sizeof(int));
+        sprintf(fgPID, "%d", spawnPid);
+        // printf("PARENT(%d): child(%d) terminated. Exiting\n", getpid(), spawnPid);   
+      } else {
+        bgPID = malloc(10 * sizeof(int));
+        sprintf(bgPID, "%d", spawnPid);
+      }
       goto start;
     }
   }
