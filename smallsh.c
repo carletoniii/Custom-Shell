@@ -222,9 +222,11 @@ int main(void){
           }
         }
         if (words[1] == NULL) {
+          fprintf(stderr, "\nexit\n");
+          exit((int)*fgPID);
         }
         fprintf(stderr, "\nexit\n");
-        exit(*words[1]);
+        exit(atoi(words[1]));        
       }
 
       // cd command
