@@ -11,6 +11,7 @@
 #include <ctype.h>
 #include <stdint.h>
 #include <fcntl.h>
+#include <signal.h>
 
 
 // String search and replace function
@@ -82,7 +83,7 @@ int main(void){
     // Input
     // Managing background processes
     while ((bgChild = waitpid(0, &childStatus, WUNTRACED | WNOHANG)) > 0) {
-      printf("Child pid = %jd", (intmax_t)bgChild);
+      printf("Child process %jd done.", (intmax_t)bgChild);
     }
 
     // The prompt
