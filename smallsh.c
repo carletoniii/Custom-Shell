@@ -10,6 +10,7 @@
 #include <stddef.h>
 #include <ctype.h>
 #include <stdint.h>
+#include <fcntl.h>
 
 
 // String search and replace function
@@ -57,6 +58,9 @@ int main(void){
   int bgFlag = 0;
   char *infile;
   char *outfile;
+  int sourceFD;
+  int targetFD;
+  int result;
   
   // Word pointer declarations
   char *words[512] = { NULL };
@@ -255,9 +259,39 @@ int main(void){
       break;
     case 0:
       // printf("CHILD(%d) running in command\n", getpid());
+      if (infile != NULL) {
+        sourceFD = open(infile, O_RDONLY);
+        if (sourceFD == -1) {
+          perror("source open()");
+          exit(1);
+        } 
+        result = dup2(sourceFD, 0);
+        if (result == -1) {
+          perror("source dup2()");
+          exit(2);
+        }
+      }
+      if (outfile != NULL) {
+        targetFD = open(outfile, O_WRONLY | O_CREAT | O_TRUNC, 0777);
+        if (targetFD == -1) {
+          perror("target open()");
+          exit(1);
+        }
+        result = dup2(targetFD, 1);
+        if (result == -1) {
+          perror("target dup2()");
+          exit(2);
+        }
+      }
       execvp(words[0], words);
       // perror("execvp");
-      exit(2);
+      if (infile != NULL) {
+        close(sourceFD);
+      }
+      if (outfile != NULL) {
+        close(targetFD);
+      }
+      exit(0);
       break;
     default:
       if (bgFlag == 0) {
