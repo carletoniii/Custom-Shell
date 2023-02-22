@@ -52,7 +52,7 @@ int main(void){
   // Line pointer declaration
   char *line = NULL;
   size_t n = 0;
-  int childStatus;
+  int childStatus = 0;
   int bgChild;
   char *bgPID = "";
   char *fgPID = "0";
@@ -83,7 +83,16 @@ int main(void){
     // Input
     // Managing background processes
     while ((bgChild = waitpid(0, &childStatus, WUNTRACED | WNOHANG)) > 0) {
-      printf("Child process %jd done.", (intmax_t)bgChild);
+      if (WIFEXITED(childStatus)) {
+        printf("Child process %jd done. Exit status %d.\n", (intmax_t)bgChild, WEXITSTATUS(childStatus));
+      }
+      if (WIFSTOPPED(childStatus)) {
+        kill(bgChild, SIGCONT);
+        printf("Child process %jd stopped. Continuing.\n", (intmax_t)bgChild);
+      }
+      if (WIFSIGNALED(childStatus)) {
+        printf("Child process %jd done. Signaled %d.\n", (intmax_t)bgChild, WTERMSIG(childStatus));
+      }
     }
 
     // The prompt
@@ -96,6 +105,10 @@ int main(void){
     // Reading a line of input
     errno = 0;
     ssize_t line_length = getline(&line, &n, stdin);
+      if (feof(stdin) != 0) {
+        fprintf(stderr, "\nexit\n");
+        exit((int) *fgPID);
+      }
 
     // Error handling for getline
     if (line_length == -1 || errno != 0) {
@@ -212,6 +225,11 @@ int main(void){
     }
 
     // Execution
+    
+    if (words[0] == NULL) {
+      goto start;
+    }
+
     // Built-in commands
     if (words[0] != NULL) {
       // exit command
@@ -228,7 +246,7 @@ int main(void){
         }
         if (words[1] == NULL) {
           fprintf(stderr, "\nexit\n");
-          exit((int)*fgPID);
+          exit((int) *fgPID);
         }
         fprintf(stderr, "\nexit\n");
         exit(atoi(words[1]));        
@@ -259,7 +277,6 @@ int main(void){
       exit(1);
       break;
     case 0:
-      // printf("CHILD(%d) running in command\n", getpid());
       if (infile != NULL) {
         sourceFD = open(infile, O_RDONLY);
         if (sourceFD == -1) {
@@ -285,7 +302,6 @@ int main(void){
         }
       }
       execvp(words[0], words);
-      // perror("execvp");
       if (infile != NULL) {
         close(sourceFD);
       }
@@ -298,8 +314,7 @@ int main(void){
       if (bgFlag == 0) {
         spawnPid = waitpid(spawnPid, &childStatus, 0);
         fgPID = malloc(10 * sizeof(int));
-        sprintf(fgPID, "%d", spawnPid);
-        // printf("PARENT(%d): child(%d) terminated. Exiting\n", getpid(), spawnPid);   
+        sprintf(fgPID, "%d", WEXITSTATUS(childStatus));  
       } else {
         bgPID = malloc(10 * sizeof(int));
         sprintf(bgPID, "%d", spawnPid);
